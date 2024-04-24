@@ -20,9 +20,9 @@ class _NavBarState extends State<NavBar> {
   }
 
   final List<Widget> _pages = [
-    const GalleryPage(),
-    const DrawPage(),
     const TextPage(),
+    const DrawPage(),
+    const GalleryPage(),
   ];
 
   @override
@@ -36,12 +36,16 @@ class _NavBarState extends State<NavBar> {
           unselectedItemColor: Colors.white,
           iconSize: 30,
           items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.photo), label: 'Gallery'),
-            BottomNavigationBarItem(icon: Icon(Icons.draw), label: 'Draw'),
             BottomNavigationBarItem(
-                icon: Icon(Icons.description), label: 'Text')
+                icon: Icon(Icons.description), label: 'Text'),
+            BottomNavigationBarItem(icon: Icon(Icons.draw), label: 'Draw'),
+            BottomNavigationBarItem(icon: Icon(Icons.photo), label: 'Gallery'),
           ]),
       body: _pages[_selectIndex],
     );
   }
 }
+
+// aes256 - 01234567890123456789012345678901
+// aes192 - 012345678901234567890123
+// aes128 - 0123456789012345

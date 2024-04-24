@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
+import 'package:crypto/crypto.dart';
+import 'dart:convert';
 
 // ignore_for_file: use_build_context_synchronously
 class DrawPage extends StatefulWidget {
@@ -15,6 +17,15 @@ class _DrawPageState extends State<DrawPage> {
   List<Offset> points = [];
   String? encryptedPoints;
   late String pointsString;
+
+  String _encryptPoints(String pointsString) {
+    final key = encrypt.Key.fromUtf8("01234567890123456789012345678901");
+    final iv = encrypt.IV.fromUtf8('0123456789012345');
+
+    final encrypter = encrypt.Encrypter(encrypt.AES(key));
+    final encrypted = encrypter.encrypt(pointsString, iv: iv);
+    return encrypted.base64;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -116,9 +127,16 @@ class _DrawPageState extends State<DrawPage> {
                           .join(';');
                       final encryptedPointsString =
                           _encryptPoints(pointsString);
-                      CollectionReference collref =
+
+                      final hash = sha256
+                          .convert(utf8.encode(encryptedPointsString))
+                          .toString();
+
+                      CollectionReference collRef =
                           FirebaseFirestore.instance.collection('aes_crypto');
-                      collref.add({'data': encryptedPointsString});
+                      await collRef
+                          .add({'data': encryptedPointsString, 'hash': hash});
+
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content:
@@ -149,24 +167,25 @@ class _DrawPageState extends State<DrawPage> {
                               Text('Please draw something before checking!'),
                         ),
                       );
-                    } else {
+                      return;
+                    }
+                    pointsString = points
+                        .map((offset) => '${offset.dx},${offset.dy}')
+                        .join(';');
+                    final encryptedPointsString = _encryptPoints(pointsString);
+
+                    final hash = sha256
+                        .convert(utf8.encode(encryptedPointsString))
+                        .toString();
+
+                    try {
                       QuerySnapshot querySnapshot = await FirebaseFirestore
                           .instance
                           .collection('aes_crypto')
+                          .where('hash', isEqualTo: hash)
                           .get();
 
-                      bool isMatched = false;
-                      for (QueryDocumentSnapshot document
-                          in querySnapshot.docs) {
-                        String encryptedData = document.get('data');
-                        String decryptedData = _decryptPoints(encryptedData);
-                        if (decryptedData == pointsString) {
-                          isMatched = true;
-                          break;
-                        }
-                      }
-
-                      if (isMatched) {
+                      if (querySnapshot.docs.isNotEmpty) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
                             content:
@@ -182,6 +201,13 @@ class _DrawPageState extends State<DrawPage> {
                           ),
                         );
                       }
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.red,
+                          content: Text('An error occurred: $e'),
+                        ),
+                      );
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -217,24 +243,6 @@ class _DrawPageState extends State<DrawPage> {
         ),
       ),
     );
-  }
-
-  String _encryptPoints(String pointsString) {
-    final key = encrypt.Key.fromUtf8("1234567890123456");
-    final iv = encrypt.IV.fromUtf8('0123456789012345');
-
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    final encrypted = encrypter.encrypt(pointsString, iv: iv);
-    return encrypted.base64;
-  }
-
-  String _decryptPoints(String encryptedPointsString) {
-    final key = encrypt.Key.fromUtf8("1234567890123456");
-    final iv = encrypt.IV.fromUtf8('0123456789012345');
-
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    final decrypted = encrypter.decrypt64(encryptedPointsString, iv: iv);
-    return decrypted;
   }
 }
 

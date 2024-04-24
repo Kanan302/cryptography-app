@@ -16,7 +16,7 @@ class _TextPageState extends State<TextPage> {
   String _decryptedText = "";
 
   String _encryptAES(String text, String signature) {
-    final key = encrypt.Key.fromUtf8("1234567890123456");
+    final key = encrypt.Key.fromUtf8("01234567890123456789012345678901");
     final iv = encrypt.IV.fromUtf8('0123456789012345');
 
     final encrypter = encrypt.Encrypter(encrypt.AES(key));
@@ -25,7 +25,7 @@ class _TextPageState extends State<TextPage> {
   }
 
   String _decryptAES(String encryptedText, String signature) {
-    final key = encrypt.Key.fromUtf8("1234567890123456");
+    final key = encrypt.Key.fromUtf8("01234567890123456789012345678901");
     final iv = encrypt.IV.fromUtf8('0123456789012345');
 
     final encrypter = encrypt.Encrypter(encrypt.AES(key));

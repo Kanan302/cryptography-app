@@ -58,7 +58,7 @@ class _GalleryPageState extends State<GalleryPage> {
   }
 
   String _encryptAES(String text) {
-    final key = encrypt.Key.fromUtf8("1234567890123456");
+    final key = encrypt.Key.fromUtf8("01234567890123456789012345678901");
     final iv = encrypt.IV.fromUtf8('0123456789012345');
     const signature = 'YourSignatureHere';
 
